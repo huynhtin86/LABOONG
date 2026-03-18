@@ -48,8 +48,6 @@ export interface Sale {
 }
 
 export interface Settings {
-  dailyRevenueTarget: number;
-  monthlyRevenueTarget: number;
   shopLat?: number;
   shopLng?: number;
   allowedRadius?: number;

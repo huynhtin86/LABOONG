@@ -45,8 +45,6 @@
       "description": "Shop settings and targets.",
       "type": "object",
       "properties": {
-        "dailyRevenueTarget": { "type": "number" },
-        "monthlyRevenueTarget": { "type": "number" },
         "shopLat": { "type": "number", "description": "Latitude of the shop" },
         "shopLng": { "type": "number", "description": "Longitude of the shop" },
         "allowedRadius": { "type": "number", "description": "Allowed radius in meters" },
