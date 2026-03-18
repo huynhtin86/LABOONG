@@ -1,0 +1,145 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email == "huynhtin86@gmail.com" || 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin" ||
+         (exists(/databases/$(database)/documents/settings/global) && 
+          'adminEmails' in get(/databases/$(database)/documents/settings/global).data &&
+          request.auth.token.email in get(/databases/$(database)/documents/settings/global).data.adminEmails));
+    }
+
+    function isStaff() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "staff";
+    }
+
+    function isValidInventoryItem(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() < 500 &&
+             data.quantity is number &&
+             data.unit is string &&
+             data.minThreshold is number &&
+             data.purchasePrice is number &&
+             data.expiryDate is string &&
+             (data.lastUpdated == null || data.lastUpdated is string);
+    }
+
+    function isValidProduct(data) {
+      return data.name is string && data.name.size() > 0 &&
+             data.price is number && data.price >= 0 &&
+             data.category is string;
+    }
+
+    function isValidSale(data) {
+      return data.productId is string &&
+             (data.productName == null || data.productName is string) &&
+             data.quantity is number && data.quantity > 0 &&
+             data.totalPrice is number &&
+             data.timestamp is string &&
+             data.userId == request.auth.uid;
+    }
+
+    function isValidMovement(data) {
+      return data.itemId is string &&
+             data.quantity is number && data.quantity >= 0 &&
+             data.type in ['in', 'out'] &&
+             data.timestamp is string &&
+             data.userId == request.auth.uid &&
+             (data.itemName == null || data.itemName is string) &&
+             (data.reason == null || data.reason is string);
+    }
+
+    function isValidRecipe(data) {
+      return data.productId is string &&
+             (data.productName == null || data.productName is string) &&
+             data.ingredients is list;
+    }
+
+    function isValidEmployee(data) {
+      return data.name is string && data.name.size() > 0 &&
+             data.role is string &&
+             data.status in ['active', 'inactive'] &&
+             (data.hourlyRate == null || data.hourlyRate is number) &&
+             (data.phone == null || data.phone is string);
+    }
+
+    function isValidAttendance(data) {
+      return data.employeeId is string &&
+             (data.employeeName == null || data.employeeName is string) &&
+             data.clockIn is string &&
+             (data.clockOut == null || data.clockOut is string) &&
+             data.date is string &&
+             (data.status == null || data.status is string) &&
+             (data.totalHours == null || data.totalHours is number) &&
+             (data.clockInLoc == null || data.clockInLoc is map || data.clockInLoc is string) &&
+             (data.clockOutLoc == null || data.clockOutLoc is map || data.clockOutLoc is string);
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow create: if isAuthenticated() && isOwner(userId) && 
+                    (request.resource.data.role == 'staff' || request.auth.token.email == "huynhtin86@gmail.com");
+      allow update: if isAuthenticated() && (isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role));
+    }
+
+    match /inventory/{itemId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && (isAdmin() || (isStaff() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['quantity', 'lastUpdated'])));
+      allow create: if isAuthenticated() && isAdmin(); // Staff can't create new items
+      allow delete: if isAuthenticated() && isAdmin();
+    }
+
+    match /products/{productId} {
+      allow read: if isAuthenticated() && isAdmin();
+      allow create, update: if isAuthenticated() && isAdmin();
+      allow delete: if isAuthenticated() && isAdmin();
+    }
+
+    match /sales/{saleId} {
+      allow read: if isAuthenticated() && isAdmin();
+      allow create: if isAuthenticated() && isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAuthenticated() && isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isAdmin();
+    }
+
+    match /movements/{movementId} {
+      allow read: if isAuthenticated() && (isAdmin() || (isStaff() && resource.data.type == 'out'));
+      allow create: if isAuthenticated() && (isAdmin() || (isStaff() && request.resource.data.type == 'out'));
+      allow update: if isAdmin();
+      allow delete: if isAuthenticated() && isAdmin();
+    }
+
+    match /recipes/{recipeId} {
+      allow read: if isAuthenticated() && isAdmin();
+      allow create, update: if isAuthenticated() && isAdmin();
+      allow delete: if isAuthenticated() && isAdmin();
+    }
+
+    match /employees/{employeeId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isAdmin();
+      allow delete: if isAuthenticated() && isAdmin();
+    }
+
+    match /attendance/{attendanceId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && (isAdmin() || isStaff());
+      allow delete: if isAuthenticated() && isAdmin();
+    }
+  }
+}

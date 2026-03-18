@@ -1,0 +1,7 @@
+{
+  "name": "Laboong Manager",
+  "description": "A comprehensive tool for bubble tea shops to manage inventory, track sales targets, and project revenue.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

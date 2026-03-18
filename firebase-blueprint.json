@@ -1,0 +1,146 @@
+{
+  "entities": {
+    "InventoryItem": {
+      "title": "Inventory Item",
+      "description": "Represents a raw material or ingredient in stock.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the ingredient (e.g., Pearls, Tea leaves)" },
+        "quantity": { "type": "number", "description": "Current quantity in stock" },
+        "unit": { "type": "string", "description": "Unit of measurement (e.g., kg, liter, bag)" },
+        "minThreshold": { "type": "number", "description": "Minimum quantity before alert" },
+        "purchasePrice": { "type": "number", "description": "Purchase price per unit" },
+        "expiryDate": { "type": "string", "format": "date", "description": "Expiration date" },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "quantity", "unit", "minThreshold"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "A menu item sold at the shop.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the drink" },
+        "price": { "type": "number", "description": "Selling price" },
+        "category": { "type": "string", "description": "Category (e.g., Milk Tea, Fruit Tea)" }
+      },
+      "required": ["name", "price", "category"]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "Record of a sale transaction.",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string", "description": "ID of the product sold" },
+        "productName": { "type": "string" },
+        "quantity": { "type": "number" },
+        "totalPrice": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" }
+      },
+      "required": ["productId", "quantity", "totalPrice", "timestamp", "userId"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Shop settings and targets.",
+      "type": "object",
+      "properties": {
+        "dailyRevenueTarget": { "type": "number" },
+        "monthlyRevenueTarget": { "type": "number" },
+        "shopLat": { "type": "number", "description": "Latitude of the shop" },
+        "shopLng": { "type": "number", "description": "Longitude of the shop" },
+        "allowedRadius": { "type": "number", "description": "Allowed radius in meters" },
+        "allowedWifi": { "type": "string", "description": "Allowed WiFi SSID (Note: Browser can't verify SSID easily, used for manual check or IP)" },
+        "adminEmails": { "type": "array", "items": { "type": "string" }, "description": "List of emails with admin privileges" }
+      }
+    },
+    "StockMovement": {
+      "title": "Stock Movement",
+      "description": "Record of stock being added or removed.",
+      "type": "object",
+      "properties": {
+        "itemId": { "type": "string" },
+        "itemName": { "type": "string" },
+        "quantity": { "type": "number" },
+        "type": { "type": "string", "enum": ["in", "out"] },
+        "reason": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" }
+      },
+      "required": ["itemId", "itemName", "quantity", "type", "timestamp", "userId"]
+    },
+    "ProductRecipe": {
+      "title": "Product Recipe",
+      "description": "Defines the ingredients and quantities required for a menu item.",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "ingredients": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "inventoryItemId": { "type": "string" },
+              "itemName": { "type": "string" },
+              "quantity": { "type": "number" },
+              "unit": { "type": "string" }
+            }
+          }
+        }
+      },
+      "required": ["productId", "ingredients"]
+    },
+    "Employee": {
+      "title": "Employee",
+      "description": "Represents a staff member at the shop.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "hourlyRate": { "type": "number" },
+        "phone": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive"] }
+      },
+      "required": ["name", "role", "status"]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Record of employee working hours.",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "employeeName": { "type": "string" },
+        "clockIn": { "type": "string", "format": "date-time" },
+        "clockOut": { "type": "string", "format": "date-time" },
+        "totalHours": { "type": "number" },
+        "date": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["present", "late", "absent"] }
+      },
+      "required": ["employeeId", "clockIn", "date"]
+    },
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "User account information and role.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "staff"] },
+        "displayName": { "type": "string" }
+      },
+      "required": ["uid", "email", "role"]
+    }
+  },
+  "firestore": {
+    "/inventory": { "schema": "InventoryItem", "description": "Collection of inventory items" },
+    "/products": { "schema": "Product", "description": "Collection of menu products" },
+    "/sales": { "schema": "Sale", "description": "Collection of sales records" },
+    "/settings": { "schema": "Settings", "description": "Global or user-specific settings" },
+    "/movements": { "schema": "StockMovement", "description": "Collection of stock movements" },
+    "/recipes": { "schema": "ProductRecipe", "description": "Collection of product recipes/norms" },
+    "/employees": { "schema": "Employee", "description": "Collection of employees" },
+    "/attendance": { "schema": "Attendance", "description": "Collection of attendance records" },
+    "/users": { "schema": "UserProfile", "description": "Collection of user profiles" }
+  }
+}
